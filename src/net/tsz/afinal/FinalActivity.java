@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import net.tsz.afinal.annotation.view.EventListener;
 import net.tsz.afinal.annotation.view.Select;
 import net.tsz.afinal.annotation.view.ViewInject;
+import net.tsz.afinal.utils.FieldUtils;
 import android.app.Activity;
 import android.text.TextUtils;
 import android.view.View;
@@ -53,7 +54,7 @@ public abstract class FinalActivity extends Activity {
 	
 	
 	public static void initInjectedView(Object injectedSource,View sourceView){
-		Field[] fields = injectedSource.getClass().getDeclaredFields();
+		Field[] fields = FieldUtils.getFields(injectedSource.getClass());
 		if(fields!=null && fields.length>0){
 			for(Field field : fields){
 				try {

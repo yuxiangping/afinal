@@ -57,7 +57,7 @@ public class ClassUtils {
 	 */
 	public static String getPrimaryKeyColumn(Class<?> clazz) {
 		String primaryKey = null ;
-		Field[] fields = clazz.getDeclaredFields();
+		Field[] fields = FieldUtils.getFields(clazz);
 		if(fields != null){
 			Id idAnnotation = null ;
 			Field idField = null ;
@@ -99,7 +99,7 @@ public class ClassUtils {
 	 */
 	public static Field getPrimaryKeyField(Class<?> clazz) {
 		Field primaryKeyField = null ;
-		Field[] fields = clazz.getDeclaredFields();
+		Field[] fields = FieldUtils.getFields(clazz);
 		if(fields != null){
 			
 			for(Field field : fields){ //获取ID注解
@@ -157,7 +157,7 @@ public class ClassUtils {
 		
 		List<Property> plist = new ArrayList<Property>();
 		try {
-			Field[] fs = clazz.getDeclaredFields();
+			Field[] fs = FieldUtils.getFields(clazz);
 			String primaryKeyFieldName = getPrimaryKeyFieldName(clazz);
 			for (Field f : fs) {
 				//必须是基本数据类型和没有标瞬时态的字段
@@ -199,7 +199,7 @@ public class ClassUtils {
 		
 		List<ManyToOne> mList = new ArrayList<ManyToOne>();
 		try {
-			Field[] fs = clazz.getDeclaredFields();
+			Field[] fs = FieldUtils.getFields(clazz);
 			for (Field f : fs) {
 				if (!FieldUtils.isTransient(f) && FieldUtils.isManyToOne(f)) {
 					
@@ -239,7 +239,7 @@ public class ClassUtils {
 		
 		List<OneToMany> oList = new ArrayList<OneToMany>();
 		try {
-			Field[] fs = clazz.getDeclaredFields();
+			Field[] fs = FieldUtils.getFields(clazz);
 			for (Field f : fs) {
 				if (!FieldUtils.isTransient(f) && FieldUtils.isOneToMany(f)) {
 					

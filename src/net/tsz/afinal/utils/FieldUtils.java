@@ -20,7 +20,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import net.tsz.afinal.annotation.sqlite.Id;
 import net.tsz.afinal.annotation.sqlite.ManyToOne;
@@ -57,7 +60,7 @@ public class FieldUtils {
 			mn = fieldName;
 		}
 		try {
-			return clazz.getDeclaredMethod(mn);
+			return getMethod(clazz, mn, null);
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 			return null;
@@ -72,7 +75,7 @@ public class FieldUtils {
 			mn = "set" + fn.substring(2, 3).toUpperCase() + fn.substring(3);
 		}
 		try {
-			return clazz.getDeclaredMethod(mn, f.getType());
+			return  getMethod(clazz, mn, f.getType());
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 			return null;
@@ -93,7 +96,7 @@ public class FieldUtils {
 	public static Method getFieldGetMethod(Class<?> clazz, String fieldName) {
 		String mn = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 		try {
-			return clazz.getDeclaredMethod(mn);
+			return getMethod(clazz, mn, null);
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 			return null;
@@ -104,7 +107,7 @@ public class FieldUtils {
 		String fn = f.getName();
 		String mn = "set" + fn.substring(0, 1).toUpperCase() + fn.substring(1);
 		try {
-			return clazz.getDeclaredMethod(mn, f.getType());
+			return getMethod(clazz, mn, f.getType());
 		} catch (NoSuchMethodException e) {
 			if(f.getType() == boolean.class){
 				return getBooleanFieldSetMethod(clazz, f);
@@ -115,7 +118,7 @@ public class FieldUtils {
 	
 	public static Method getFieldSetMethod(Class<?> clazz, String fieldName) {
 		try {
-			return getFieldSetMethod(clazz, clazz.getDeclaredField(fieldName));
+			return getFieldSetMethod(clazz,  getField(clazz,fieldName));
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		} catch (NoSuchFieldException e) {
@@ -187,7 +190,7 @@ public class FieldUtils {
 	public static Field getFieldByColumnName(Class<?> clazz,String columnName){
 		Field field = null;
 		if(columnName!=null){
-			Field[] fields = clazz.getDeclaredFields();
+			Field[] fields = getFields(clazz);
 			if(fields!=null && fields.length>0){
 				if(columnName.equals(ClassUtils.getPrimaryKeyColumn(clazz)))
 					field = ClassUtils.getPrimaryKeyField(clazz);
@@ -227,7 +230,7 @@ public class FieldUtils {
 		Field field = null;
 		if(fieldName!=null){
 			try {
-				field = clazz.getDeclaredField(fieldName);
+				field = getField(clazz, fieldName);
 			} catch (SecurityException e) {
 				e.printStackTrace();
 			} catch (NoSuchFieldException e) {
@@ -349,4 +352,61 @@ public class FieldUtils {
 		}
 		return null;
 	}
+	
+	public static Field[] getFields(Class<?> clazz) {
+	  Field[] fields = clazz.getDeclaredFields();
+	  
+	  List<Field> list = new ArrayList<Field>();
+	  list.addAll(Arrays.asList(fields));
+
+	  fillParentClassFields(list, clazz.getSuperclass());
+	  Field[] f = new Field[list.size()];
+	  list.toArray(f);
+	  return f;
+	}
+	
+	public static Field getField(Class<?> clazz, String name) throws NoSuchFieldException{
+	  Field[] fields = getFields(clazz);
+	  for(Field field : fields) {
+	    if(field.getName().equals(name)) {
+	      return field;
+	    }
+	  }
+	  throw new NoSuchFieldException("no field found ["+name+"]"); 
+	}
+	
+	public static Method getMethod(Class<?> clazz, String name, Class<?> type) throws NoSuchMethodException{
+	  try {
+    	if(type!=null) {
+          return clazz.getDeclaredMethod(name, type);
+    	} else {
+    	  return clazz.getDeclaredMethod(name);
+        }
+	  } catch (NoSuchMethodException e) {
+	    if(clazz.getSuperclass()==null) {
+	      throw e;
+	    }
+	    return getMethod(clazz.getSuperclass(), name, type);
+	  }
+	}
+	
+	private static void fillParentClassFields(List<Field> list, Class<?> clazz) {
+	  if(clazz == null) {
+	    return;
+	  }
+	  Field[] fields = clazz.getDeclaredFields();
+      
+      list.addAll(Arrays.asList(fields));
+      fillParentClassFields(list, clazz.getSuperclass());
+	}
+	
+	private static void fillParentClassMethods(List<Method> list, Class<?> clazz) {
+      if(clazz == null) {
+        return;
+      }
+      Method[] methods = clazz.getDeclaredMethods();
+      
+      list.addAll(Arrays.asList(methods));
+      fillParentClassMethods(list, clazz.getSuperclass());
+    }
 }
